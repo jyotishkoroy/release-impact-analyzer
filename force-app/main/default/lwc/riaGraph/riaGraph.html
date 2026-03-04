@@ -1,0 +1,33 @@
+<template>
+    <div class="wrap">
+        <template if:true={hasData}>
+            <div class="toolbar">
+                <lightning-button-icon icon-name="utility:zoomin" alternative-text="Zoom in" onclick={zoomIn}></lightning-button-icon>
+                <lightning-button-icon icon-name="utility:zoomout" alternative-text="Zoom out" onclick={zoomOut}></lightning-button-icon>
+                <lightning-button-icon icon-name="utility:refresh" alternative-text="Reset" onclick={reset}></lightning-button-icon>
+                <div class="hint">Layered graph (depth →). Drag to pan.</div>
+            </div>
+            <div class="stage" onmousedown={panStart} onmousemove={panMove} onmouseup={panEnd} onmouseleave={panEnd}>
+                <svg class="svg" viewBox={viewBox}>
+                    <g transform={transform}>
+                        <template for:each={lines} for:item="l">
+                            <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} class="edge"></line>
+                        </template>
+
+                        <template for:each={dots} for:item="d">
+                            <g key={d.id} transform={d.tx}>
+                                <rect x={d.rx} y={d.ry} width={d.w} height={d.h} rx="10" ry="10" class={d.cls}></rect>
+                                <text x={d.txLabel} y={d.tyLabel} class="label">{d.shortLabel}</text>
+                                <text x={d.txType} y={d.tyType} class="type">{d.type}</text>
+                            </g>
+                        </template>
+                    </g>
+                </svg>
+            </div>
+        </template>
+
+        <template if:false={hasData}>
+            <div class="empty">No data yet.</div>
+        </template>
+    </div>
+</template>

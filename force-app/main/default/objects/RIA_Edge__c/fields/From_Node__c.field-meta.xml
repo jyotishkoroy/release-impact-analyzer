@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>From_Node__c</fullName>
+    <label>From Node</label>
+    <type>Lookup</type>
+    <referenceTo>RIA_Node__c</referenceTo>
+    <relationshipLabel>From Edges</relationshipLabel>
+    <relationshipName>From_Edges</relationshipName>
+    <required>true</required>
+</CustomField>

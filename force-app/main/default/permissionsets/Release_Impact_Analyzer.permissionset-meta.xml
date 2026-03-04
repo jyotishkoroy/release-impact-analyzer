@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Release Impact Analyzer</label>
+
+    <!-- Apex class access (required for LWC -> Apex calls) -->
+    <classAccesses>
+        <apexClass>RIA_AppController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RIA_GraphService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RIA_ImpactService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RIA_Settings</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RIA_ServerSync</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RIA_SyncScheduler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+
+    <!-- Make the tab visible -->
+    <tabSettings>
+        <tab>Release_Impact_Analyzer</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+
+    <!-- Object permissions -->
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+        <object>RIA_Node__c</object>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+        <object>RIA_Edge__c</object>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+        <object>RIA_Sync_Run__c</object>
+    </objectPermissions>
+
+    <!-- Field permissions (explicit to avoid FLS issues in locked-down orgs) -->
+    <!-- RIA_Node__c -->
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.External_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.Component_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.Component_Name__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.Metadata_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.Namespace__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Node__c.Last_Seen__c</field><readable>true</readable></fieldPermissions>
+
+    <!-- RIA_Edge__c -->
+    <fieldPermissions><editable>true</editable><field>RIA_Edge__c.External_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Edge__c.From_Node__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Edge__c.To_Node__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Edge__c.Relationship__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Edge__c.Last_Seen__c</field><readable>true</readable></fieldPermissions>
+
+    <!-- RIA_Sync_Run__c -->
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Mode__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Started_At__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Finished_At__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Message__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Nodes_Upserted__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Edges_Upserted__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>RIA_Sync_Run__c.Edges_Deleted__c</field><readable>true</readable></fieldPermissions>
+
+    <!-- System permissions -->
+    <userPermissions><enabled>true</enabled><name>ApiEnabled</name></userPermissions>
+    <userPermissions><enabled>true</enabled><name>ViewSetup</name></userPermissions>
+    <userPermissions><enabled>true</enabled><name>CustomizeApplication</name></userPermissions>
+</PermissionSet>

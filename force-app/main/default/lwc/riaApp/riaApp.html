@@ -1,0 +1,256 @@
+<template>
+    <section class="shell">
+        <header class="hero">
+            <div class="hero__left">
+                <div class="title">Release Impact Analyzer</div>
+                <div class="subtitle">Dependency graph · blast radius · deploy checklist · export</div>
+            </div>
+            <div class="hero__right">
+                <lightning-button variant="brand" label="Sync via Browser" onclick={handleBrowserSync} disabled={syncing}></lightning-button>
+                <lightning-button class="slds-m-left_small" variant="neutral" label="Generate Impact" onclick={handleGenerateImpact} disabled={impactDisabled}></lightning-button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="grid">
+                <article class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">Sync Status</div>
+                        <div class="panel__meta">
+                            <template if:true={summary}>
+                                <span class="pill">{summary.nodeCount} nodes</span>
+                                <span class="pill">{summary.edgeCount} edges</span>
+                                <span class="pill pill--muted">{summary.lastRunMode}</span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="panel__body">
+                        <template if:true={summary}>
+                            <div class="kv">
+                                <div class="kv__row">
+                                    <div class="kv__k">Last run</div>
+                                    <div class="kv__v">{summary.lastRunStatus} — <lightning-formatted-date-time value={summary.lastRunStartedAt}></lightning-formatted-date-time></div>
+                                </div>
+                                <div class="kv__row">
+                                    <div class="kv__k">Message</div>
+                                    <div class="kv__v muted">{summary.lastRunMessage}</div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template if:true={syncing}>
+                            <div class="progress">
+                                <lightning-progress-bar value={syncProgress} size="medium"></lightning-progress-bar>
+                                <div class="progress__meta">{syncLabel}</div>
+                            </div>
+                        </template>
+
+                        <div class="actions">
+                            <lightning-button variant="brand" label="Sync via Browser (recommended)" onclick={handleBrowserSync} disabled={syncing}></lightning-button>
+                            <lightning-button class="slds-m-left_small" variant="neutral" label="Server Sync: Test Callout" onclick={handleTestServerSync} disabled={syncing}></lightning-button>
+                            <lightning-button class="slds-m-left_small" variant="neutral" label="Server Sync: Run Now" onclick={handleRunServerSync} disabled={syncing}></lightning-button>
+                        </div>
+
+                        <div class="note">
+                            Browser sync uses same-origin Tooling API calls and typically requires only API + setup access. Optional server sync requires a Named Credential.
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">Change Set</div>
+                        <div class="panel__meta">
+                            <span class="pill pill--muted">{changeItems.length} items</span>
+                        </div>
+                    </div>
+                    <div class="panel__body">
+                        <div class="controls">
+                            <lightning-combobox
+                                name="type"
+                                label="Type"
+                                value={newType}
+                                placeholder="Select"
+                                options={typeOptions}
+                                onchange={handleTypeChange}>
+                            </lightning-combobox>
+
+                            <lightning-input
+                                class="slds-m-left_small"
+                                type="search"
+                                label="Search components (from graph)"
+                                value={searchTerm}
+                                onchange={handleSearchTermChange}
+                                onkeyup={handleSearchKeyUp}
+                                placeholder="Start typing...">
+                            </lightning-input>
+
+                            <lightning-combobox
+                                class="slds-m-left_small"
+                                label="Action"
+                                value={newAction}
+                                placeholder="Modify"
+                                options={actionOptions}
+                                onchange={handleActionChange}>
+                            </lightning-combobox>
+
+                            <lightning-button class="slds-m-left_small" label="Add" variant="brand" onclick={handleAddSelected} disabled={addDisabled}></lightning-button>
+                        </div>
+
+                        <template if:true={suggestions.length}>
+                            <div class="suggestions">
+                                <template for:each={suggestions} for:item="s">
+                                    <button key={s.externalId} class="suggestion" data-externalid={s.externalId} data-name={s.name} data-type={s.type} onclick={handlePickSuggestion}>
+                                        <span class="suggestion__type">{s.type}</span>
+                                        <span class="suggestion__name">{s.name}</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+
+                        <div class="tableWrap">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col"><div class="slds-truncate">Type</div></th>
+                                        <th scope="col"><div class="slds-truncate">Name</div></th>
+                                        <th scope="col"><div class="slds-truncate">Action</div></th>
+                                        <th scope="col"><div class="slds-truncate">New Name</div></th>
+                                        <th scope="col"><div class="slds-truncate">Remove</div></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={changeItems} for:item="c" for:index="i">
+                                        <tr key={c.key}>
+                                            <td><div class="slds-truncate">{c.type}</div></td>
+                                            <td><div class="slds-truncate">{c.name}</div></td>
+                                            <td><div class="slds-truncate">{c.action}</div></td>
+                                            <td>
+                                                <template if:true={c.isRename}>
+                                                    <lightning-input data-index={i} value={c.newName} onchange={handleRenameInput} placeholder="New API name..."></lightning-input>
+                                                </template>
+                                            </td>
+                                            <td>
+                                                <lightning-button-icon icon-name="utility:close" alternative-text="Remove" data-index={i} onclick={handleRemove}></lightning-button-icon>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="import">
+                            <lightning-textarea label="Paste import (one per line: Type Name [Action])" value={pasteText} onchange={handlePasteChange} placeholder="ApexClass MyClass MODIFY&#10;CustomField Account.MyField__c DELETE"></lightning-textarea>
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Parse & Add" variant="neutral" onclick={handleParsePaste}></lightning-button>
+                                <lightning-button class="slds-m-left_small" label="Clear" variant="destructive-text" onclick={handleClearChangeSet}></lightning-button>
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+            </div>
+
+            <article class="panel panel--full">
+                <div class="panel__header">
+                    <div class="panel__title">Impact Report</div>
+                    <div class="panel__meta">
+                        <template if:true={impactReport}>
+                            <span class="pill">{impactReport.nodes.length} nodes</span>
+                            <span class="pill">{impactReport.edges.length} edges</span>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="panel__body">
+                    <template if:false={impactReport}>
+                        <div class="empty">
+                            Sync the graph, add a change set, then click <b>Generate Impact</b>.
+                        </div>
+                    </template>
+
+                    <template if:true={impactReport}>
+                        <div class="impactGrid">
+                            <div class="impactLeft">
+                                <div class="sectionTitle">Checklist</div>
+                                <ul class="checklist">
+                                    <template for:each={impactReport.checklist} for:item="c">
+                                        <li key={c.text} class={c.className}>
+                                            <span class="sev">{c.severity}</span>
+                                            <span class="cat">{c.category}</span>
+                                            <span class="txt">{c.text}</span>
+                                        </li>
+                                    </template>
+                                </ul>
+
+                                <div class="sectionTitle slds-m-top_medium">Export</div>
+                                <div class="exportActions">
+                                    <lightning-button label="Copy Markdown" variant="brand" onclick={handleCopyMarkdown}></lightning-button>
+                                    <lightning-button class="slds-m-left_small" label="Download .md" variant="neutral" onclick={handleDownloadMarkdown}></lightning-button>
+                                </div>
+
+                                <div class="slds-m-top_small">
+                                    <lightning-textarea label="Markdown (Jira-friendly)" value={impactReport.markdown} readonly></lightning-textarea>
+                                </div>
+                            </div>
+
+                            <div class="impactRight">
+                                <div class="sectionTitle">Blast Radius Graph</div>
+                                <c-ria-graph nodes={graphNodes} edges={graphEdges} root-ids={graphRootIds}></c-ria-graph>
+
+                                <div class="sectionTitle slds-m-top_medium">Impacted Components</div>
+                                <div class="chips">
+                                    <template for:each={typeChips} for:item="t">
+                                        <span key={t.label} class="chip">{t.label}: {t.count}</span>
+                                    </template>
+                                </div>
+
+                                <div class="tableWrap slds-m-top_small">
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th scope="col"><div class="slds-truncate">Depth</div></th>
+                                                <th scope="col"><div class="slds-truncate">Type</div></th>
+                                                <th scope="col"><div class="slds-truncate">Name</div></th>
+                                                <th scope="col"><div class="slds-truncate">Changed</div></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={impactReport.nodes} for:item="n">
+                                                <tr key={n.id} class={n.rowClass}>
+                                                    <td><div class="slds-truncate">{n.depth}</div></td>
+                                                    <td><div class="slds-truncate">{n.type}</div></td>
+                                                    <td><div class="slds-truncate">{n.name}</div></td>
+                                                    <td><div class="slds-truncate">{n.isChanged}</div></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </article>
+
+            <article class="panel panel--full slds-m-top_medium">
+                <div class="panel__header">
+                    <div class="panel__title">Server Sync Scheduler (optional)</div>
+                </div>
+                <div class="panel__body">
+                    <div class="scheduler">
+                        <lightning-input label="Cron (Salesforce)" value={cronExpr} onchange={handleCronChange} placeholder="0 0 2 * * ?"></lightning-input>
+                        <div class="slds-m-top_small">
+                            <lightning-button variant="neutral" label="Schedule Server Sync" onclick={handleSchedule}></lightning-button>
+                        </div>
+                        <div class="note">
+                            Server sync requires a Named Credential named <b>RIA_Self</b>. If you don’t want callout setup, use Browser Sync.
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+    </section>
+</template>
